@@ -1,5 +1,6 @@
 package com.example.cameraapp;
 
+import android.content.Context;
 import android.support.v4.content.FileProvider;
 import android.util.Log;
 import android.view.View;
@@ -19,8 +20,11 @@ import java.io.IOException;
 public class MainActivity extends AppCompatActivity {
 
     protected static final int CAMERA_REQUEST_ID = 1;
-    private Uri file;
+    private File file;
+    private Uri UriFile;
     Bitmap bitmap;
+    private String fileName;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,21 +45,22 @@ public class MainActivity extends AppCompatActivity {
         Log.i("TAG","Opening camera");
         Intent intentTakePhoto = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         file = getFile();
+        UriFile = FileProvider.getUriForFile(this, "com.example.android.provider", file);
 
         Log.i("TAG","Putting image onto image file");
-        intentTakePhoto.putExtra(MediaStore.EXTRA_OUTPUT, file);
 
+        //Puts data into UriFile location
+        intentTakePhoto.putExtra(MediaStore.EXTRA_OUTPUT, UriFile);
+
+        //Checks if activity is successful or cancelled
         if(intentTakePhoto.resolveActivity(getPackageManager()) != null){
             startActivityForResult(intentTakePhoto, CAMERA_REQUEST_ID);
         }
 
     }
 
-    private Uri getFile(){
-        //File folder = Environment.getExternalStoragePublicDirectory("/CameraApp/photos");
+    private File getFile(){
         File folder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-        //File folder = Environment.getExternalStorageDirectory();
-
 
         //Creates folder if it doesn't exist already
         if(!folder.exists()){
@@ -63,42 +68,49 @@ public class MainActivity extends AppCompatActivity {
         }
 
         //Name of file
-        String fileName = "CameraApp_" + String.valueOf(System.currentTimeMillis());
+        fileName = "CameraApp_" + String.valueOf(System.currentTimeMillis());
 
         //Creates file name with suffix and saves into directory
         File imageFile = null;
         try{
             imageFile = File.createTempFile(fileName, ".jpg", folder);
+            fileName = imageFile.toString();
         }catch(IOException e){
             e.printStackTrace();
         }
 
         Log.i("TAG","Getting File and looking/creating folder");
 
-        //Gets URI of photo file
-        Uri photoURI = null;
-        if(imageFile != null){
-            photoURI = FileProvider.getUriForFile(this, "com.example.android.provider", imageFile);
-        }
-
-            return photoURI;
+        return imageFile;
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        Log.e("TAG", "On Activity");
+        Log.i("TAG", "On Activity");
         if(requestCode == CAMERA_REQUEST_ID){
             if(resultCode == Activity.RESULT_OK){
                 try{
-                    bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), file);
+                    bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), UriFile);
                     Log.i("TAG", "Photo was taken");
                 }catch(Exception e){
                     e.printStackTrace();
                 }
             }else if (resultCode == RESULT_CANCELED){
-                Log.e("TAG", "Photo was not taken");
+                Log.i("TAG", "Photo was not taken");
+
+
+                Context context = this;
+                context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, UriFile));
+                file.delete();
+
+                if(!file.exists()){
+                    Log.i("TAG", "No data image sent to: " + fileName + " Result: deleted");
+                }else {
+                    Log.e("TAG", file.getPath() + " -> Still exists");
+                }
+
             }
         }
     }
