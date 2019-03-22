@@ -6,12 +6,6 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.PermissionChecker;
-import java.util.ArrayList;
-import java.util.List;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -34,7 +28,6 @@ public class MainActivity extends AppCompatActivity {
     private String fileName;
     Bitmap bitmap;
     Context contextPermissions;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private File getFile(){
-        File folder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        File folder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM + "/Camera");
 
         //Creates folder if it doesn't exist already
         if(!folder.exists()){
@@ -128,6 +121,7 @@ public class MainActivity extends AppCompatActivity {
                 try{
                     bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), UriFile);
                     Log.i("TAG", "Photo was taken and saved");
+                    Log.i("TAG", "File saved to: " + file.getAbsolutePath());
                 }catch(Exception e){
                     e.printStackTrace();
                 }
@@ -144,7 +138,6 @@ public class MainActivity extends AppCompatActivity {
                 }else {
                     Log.e("TAG", file.getPath() + " -> Still exists");
                 }
-
             }
         }
     }
