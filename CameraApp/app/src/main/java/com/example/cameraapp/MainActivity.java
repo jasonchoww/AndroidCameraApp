@@ -1,15 +1,17 @@
 package com.example.cameraapp;
 
 import android.Manifest;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.PermissionChecker;
+import java.util.ArrayList;
+import java.util.List;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -21,16 +23,12 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
     protected static final int CAMERA_REQUEST_ID = 1;
-    protected static final int WRITE_EXTERNAL_REQUEST_ID = 2;
     private File file;
     private Uri UriFile;
     private String fileName;
@@ -49,6 +47,8 @@ public class MainActivity extends AppCompatActivity {
         newPhoto.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                //Checks if permissions are granted then launch camera
                 if ( ContextCompat.checkSelfPermission( contextPermissions, Manifest.permission.CAMERA ) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission( contextPermissions, Manifest.permission.WRITE_EXTERNAL_STORAGE ) == PackageManager.PERMISSION_GRANTED ) {
                     launchCamera();
                 }else{
@@ -80,9 +80,9 @@ public class MainActivity extends AppCompatActivity {
 
     public void Permissions(){
         //permissions
+        contextPermissions = this;
         if ( ContextCompat.checkSelfPermission( this, Manifest.permission.CAMERA ) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission( this, Manifest.permission.WRITE_EXTERNAL_STORAGE ) != PackageManager.PERMISSION_GRANTED ) {
-
-            contextPermissions = this;
+            //Android build version
             if (Build.VERSION.SDK_INT < 23) {
             } else {
                 requestPermissions(new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, CAMERA_REQUEST_ID);
