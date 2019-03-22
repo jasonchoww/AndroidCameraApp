@@ -1,7 +1,15 @@
 package com.example.cameraapp;
 
+import android.Manifest;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.pm.PackageManager;
+import android.os.Build;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
+import android.support.v4.content.PermissionChecker;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -16,14 +24,18 @@ import android.os.Bundle;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
     protected static final int CAMERA_REQUEST_ID = 1;
+    protected static final int WRITE_EXTERNAL_REQUEST_ID = 2;
     private File file;
     private Uri UriFile;
-    Bitmap bitmap;
     private String fileName;
+    Bitmap bitmap;
+    Context contextPermissions;
 
 
     @Override
@@ -31,11 +43,17 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Permissions();
+
         Button newPhoto = (Button) findViewById(R.id.newPhoto);
         newPhoto.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                launchCamera();
+                if ( ContextCompat.checkSelfPermission( contextPermissions, Manifest.permission.CAMERA ) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission( contextPermissions, Manifest.permission.WRITE_EXTERNAL_STORAGE ) == PackageManager.PERMISSION_GRANTED ) {
+                    launchCamera();
+                }else{
+                    Log.e("TAG","Allow permission request for camera and storage in settings");
+                }
             }
         });
 
@@ -43,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void launchCamera(){
         Log.i("TAG","Opening camera");
+
         Intent intentTakePhoto = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         file = getFile();
         UriFile = FileProvider.getUriForFile(this, "com.example.android.provider", file);
@@ -57,6 +76,21 @@ public class MainActivity extends AppCompatActivity {
             startActivityForResult(intentTakePhoto, CAMERA_REQUEST_ID);
         }
 
+    }
+
+    public void Permissions(){
+        //permissions
+        if ( ContextCompat.checkSelfPermission( this, Manifest.permission.CAMERA ) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission( this, Manifest.permission.WRITE_EXTERNAL_STORAGE ) != PackageManager.PERMISSION_GRANTED ) {
+
+            contextPermissions = this;
+            if (Build.VERSION.SDK_INT < 23) {
+            } else {
+                requestPermissions(new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, CAMERA_REQUEST_ID);
+                Log.i("TAG", "Camera permission approved");
+            }
+        }else{
+            Log.e("TAG", "Camera permission denied");
+        }
     }
 
     private File getFile(){
@@ -93,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
             if(resultCode == Activity.RESULT_OK){
                 try{
                     bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), UriFile);
-                    Log.i("TAG", "Photo was taken");
+                    Log.i("TAG", "Photo was taken and saved");
                 }catch(Exception e){
                     e.printStackTrace();
                 }
