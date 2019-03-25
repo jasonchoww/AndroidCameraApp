@@ -17,6 +17,7 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -42,55 +43,59 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
 
                 //Checks if permissions are granted then launch camera
-                if ( ContextCompat.checkSelfPermission( contextPermissions, Manifest.permission.CAMERA ) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission( contextPermissions, Manifest.permission.WRITE_EXTERNAL_STORAGE ) == PackageManager.PERMISSION_GRANTED ) {
+                if (ContextCompat.checkSelfPermission(contextPermissions, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(contextPermissions, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
                     launchCamera();
-                }else{
-                    Log.e("TAG","Allow permission request for camera and storage in settings");
+                } else {
+                    Log.e("TAG", "Allow permission request for camera and storage in settings");
                 }
             }
         });
 
     }
 
-    public void launchCamera(){
-        Log.i("TAG","Opening camera");
+    public void launchCamera() {
+        Log.i("TAG", "Opening camera");
 
         Intent intentTakePhoto = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         file = getFile();
         UriFile = FileProvider.getUriForFile(this, "com.example.android.provider", file);
 
-        Log.i("TAG","Putting image onto image file");
+        Log.i("TAG", "Putting image onto image file");
 
         //Puts data into UriFile location
         intentTakePhoto.putExtra(MediaStore.EXTRA_OUTPUT, UriFile);
 
         //Checks if activity is successful or cancelled
-        if(intentTakePhoto.resolveActivity(getPackageManager()) != null){
+        if (intentTakePhoto.resolveActivity(getPackageManager()) != null) {
             startActivityForResult(intentTakePhoto, CAMERA_REQUEST_ID);
         }
 
     }
 
-    public void Permissions(){
+    public void Permissions() {
         //permissions
         contextPermissions = this;
-        if ( ContextCompat.checkSelfPermission( this, Manifest.permission.CAMERA ) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission( this, Manifest.permission.WRITE_EXTERNAL_STORAGE ) != PackageManager.PERMISSION_GRANTED ) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             //Android build version
             if (Build.VERSION.SDK_INT < 23) {
             } else {
                 requestPermissions(new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, CAMERA_REQUEST_ID);
                 Log.i("TAG", "Camera permission approved");
             }
-        }else{
+        } else {
             Log.e("TAG", "Camera permission denied");
         }
     }
 
-    private File getFile(){
-        File folder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM + "/Camera");
+    private File getFile() {
+        //Stores in camera roll/gallery
+        //File folder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM + "/Camera");
+
+        //Stores in folder called CameraApp
+        File folder = Environment.getExternalStoragePublicDirectory("/CameraApp");
 
         //Creates folder if it doesn't exist already
-        if(!folder.exists()){
+        if (!folder.exists()) {
             folder.mkdir();
         }
 
@@ -99,14 +104,14 @@ public class MainActivity extends AppCompatActivity {
 
         //Creates file name with suffix and saves into directory
         File imageFile = null;
-        try{
+        try {
             imageFile = File.createTempFile(fileName, ".jpg", folder);
             fileName = imageFile.toString();
-        }catch(IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
-        Log.i("TAG","Getting File and looking/creating folder");
+        Log.i("TAG", "Getting File and looking/creating folder");
 
         return imageFile;
     }
@@ -116,16 +121,16 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         Log.i("TAG", "On Activity");
-        if(requestCode == CAMERA_REQUEST_ID){
-            if(resultCode == Activity.RESULT_OK){
-                try{
+        if (requestCode == CAMERA_REQUEST_ID) {
+            if (resultCode == Activity.RESULT_OK) {
+                try {
                     bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), UriFile);
                     Log.i("TAG", "Photo was taken and saved");
                     Log.i("TAG", "File saved to: " + file.getAbsolutePath());
-                }catch(Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
-            }else if (resultCode == RESULT_CANCELED){
+            } else if (resultCode == RESULT_CANCELED) {
                 Log.i("TAG", "Photo was not taken");
 
 
@@ -133,9 +138,9 @@ public class MainActivity extends AppCompatActivity {
                 context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, UriFile));
                 file.delete();
 
-                if(!file.exists()){
+                if (!file.exists()) {
                     Log.i("TAG", "No data image sent to: " + fileName + " Result: deleted");
-                }else {
+                } else {
                     Log.e("TAG", file.getPath() + " -> Still exists");
                 }
             }
